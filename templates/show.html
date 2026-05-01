@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="header">
+    <h1 class="glow">⚠ DUNGEON CRAWLER LIVE BROADCAST ⚠</h1>
+    <div class="announcer" id="announcer">
+        THE DUNGEON IS INITIALIZING YOUR PAIN EXPERIENCE...
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="panel">
+        <h2>{{name}}</h2>
+        <p class="warning">STATUS: ACTIVE CRAWLER</p>
+        <p class="good">AUDIENCE FAVORABILITY: FLUCTUATING</p>
+    </div>
+
+    <div class="panel">
+        <h2>STAT FEED</h2>
+
+        {% for stat, data in stats.items() %}
+        <div class="stat">
+            <span>{{stat}}</span>
+            <span class="big">{{data.total}} ({{data.mod}})</span>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<script src="/static/announcer.js"></script>
+
+</body>
+</html>
