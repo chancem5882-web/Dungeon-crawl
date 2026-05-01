@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<body style="background:#111;color:#eee;font-family:sans-serif;">
+
+<h1>{{name}}</h1>
+
+<form method="POST">
+
+<table border="1" cellpadding="8">
+<tr>
+    <th>Stat</th><th>Base</th><th>Buff</th><th>Equip</th><th>Total</th><th>Mod</th>
+</tr>
+
+{% for stat, data in stats.items() %}
+<tr>
+    <td>{{stat}}</td>
+    <td><input type="number" name="base_{{stat}}" value="{{data.base}}"></td>
+    <td><input type="number" name="buff_{{stat}}" value="{{data.buff}}"></td>
+    <td>{{data.equipment}}</td>
+    <td>{{data.total}}</td>
+    <td>+{{data.mod}}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h2>Equipment (auto parses)</h2>
+<textarea name="equipment_text" rows="6" cols="50">{{equip_text}}</textarea>
+
+<br><br>
+<button type="submit">Save</button>
+
+</form>
+
+<p>🔗 Share this character:</p>
+<p>{{ request.url }}</p>
+
+</body>
+</html>
