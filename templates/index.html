@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<body style="background:#111;color:#eee;font-family:sans-serif;">
+<h1>DCC Character Manager</h1>
+
+<form action="/create" method="POST">
+    <input name="name" placeholder="Character Name">
+    <button>Create New Crawler</button>
+</form>
+
+<h2>Existing Crawlers</h2>
+<ul>
+{% for id, name in characters %}
+    <li><a href="/character/{{id}}">{{name}}</a></li>
+{% endfor %}
+</ul>
+
+</body>
+</html>
