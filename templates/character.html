@@ -11,6 +11,15 @@
     <th>Stat</th><th>Base</th><th>Buff</th><th>Equip</th><th>Total</th><th>Mod</th>
 </tr>
 
+<h2>LEVEL {{level}}</h2>
+
+<div style="border:1px solid #ff2bd6; width:300px; padding:5px;">
+    <div style="background:#222; width:100%;">
+        <div style="background:#ff2bd6; width:{{ (hp/max_hp)*100 }}%; height:20px;"></div>
+    </div>
+    <p>{{hp}} / {{max_hp}} HP</p>
+</div>    
+    
 {% for stat, data in stats.items() %}
 <tr>
     <td>{{stat}}</td>
