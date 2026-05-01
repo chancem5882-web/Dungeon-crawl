@@ -166,3 +166,25 @@ init_db()
 
 if __name__ == "__main__":
     app.run(debug=True)
+@app.route("/show/<char_id>")
+def show(char_id):
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+
+    c.execute("SELECT name FROM characters WHERE id=?", (char_id,))
+    name = c.fetchone()[0]
+
+    c.execute("SELECT stat, base, buff, equipment FROM stats WHERE char_id=?", (char_id,))
+    rows = c.fetchall()
+
+    stats = {}
+    for stat, base, buff, equip in rows:
+        total = base + buff + equip
+        stats[stat] = {
+            "total": total,
+            "mod": total // 5
+        }
+
+    conn.close()
+
+    return render_template("show.html", name=name, stats=stats)
