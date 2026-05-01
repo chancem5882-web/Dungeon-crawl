@@ -31,7 +31,16 @@
 </tr>
 {% endfor %}
 </table>
+<h3>Core Stats</h3>
 
+<label>Level</label>
+<input type="number" name="level" value="{{level}}">
+
+<label>HP</label>
+<input type="number" name="hp" value="{{hp}}">
+
+<label>Max HP</label>
+<input type="number" name="max_hp" value="{{max_hp}}">
 <h2>Equipment (auto parses)</h2>
 <textarea name="equipment_text" rows="6" cols="50">{{equip_text}}</textarea>
 
