@@ -46,6 +46,23 @@ def init_db():
 def calculate_modifier(value):
     return value // 5
 
+c.execute('''
+    CREATE TABLE IF NOT EXISTS meta (
+        char_id TEXT PRIMARY KEY,
+        level INTEGER,
+        hp INTEGER,
+        max_hp INTEGER
+    )
+''')
+
+c.execute('''
+    CREATE TABLE IF NOT EXISTS skills (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        char_id TEXT,
+        name TEXT,
+        value INTEGER
+    )
+''')
 def parse_equipment(text):
     bonuses = {stat: 0 for stat in STATS}
 
@@ -98,6 +115,8 @@ def create():
     conn.close()
 
     return redirect(url_for("character", char_id=char_id))
+
+c.execute("INSERT INTO meta VALUES (?, ?, ?, ?)", (char_id, 1, 100, 100))
 
 @app.route("/character/<char_id>", methods=["GET", "POST"])
 def character(char_id):
@@ -188,3 +207,10 @@ def show(char_id):
     conn.close()
 
     return render_template("show.html", name=name, stats=stats)
+# META
+c.execute("SELECT level, hp, max_hp FROM meta WHERE char_id=?", (char_id,))
+level, hp, max_hp = c.fetchone()
+
+# SKILLS
+c.execute("SELECT id, name, value FROM skills WHERE char_id=?", (char_id,))
+skills = c.fetchall()
