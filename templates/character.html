@@ -1,56 +1,52 @@
-<!DOCTYPE html>
-<html>
-<body style="background:#111;color:#eee;font-family:sans-serif;">
+<body style="background:#0a0a0a;color:#fff;font-family:monospace;">
 
-<h1>{{name}}</h1>
+<h1>{{name}} (Level {{level}})</h1>
+
+<!-- HP BAR -->
+<div style="width:300px;border:1px solid #f0f;">
+<div style="width:{{ (hp/max_hp)*100 }}%;background:#f0f;height:20px;"></div>
+</div>
+<p>{{hp}} / {{max_hp}} HP</p>
 
 <form method="POST">
 
-<table border="1" cellpadding="8">
-<tr>
-    <th>Stat</th><th>Base</th><th>Buff</th><th>Equip</th><th>Total</th><th>Mod</th>
-</tr>
-
-<h2>LEVEL {{level}}</h2>
-
-<div style="border:1px solid #ff2bd6; width:300px; padding:5px;">
-    <div style="background:#222; width:100%;">
-        <div style="background:#ff2bd6; width:{{ (hp/max_hp)*100 }}%; height:20px;"></div>
-    </div>
-    <p>{{hp}} / {{max_hp}} HP</p>
-</div>    
-    
-{% for stat, data in stats.items() %}
-<tr>
-    <td>{{stat}}</td>
-    <td><input type="number" name="base_{{stat}}" value="{{data.base}}"></td>
-    <td><input type="number" name="buff_{{stat}}" value="{{data.buff}}"></td>
-    <td>{{data.equipment}}</td>
-    <td>{{data.total}}</td>
-    <td>+{{data.mod}}</td>
-</tr>
+<h2>Stats</h2>
+{% for s,d in stats.items() %}
+<div>
+{{s}}:
+<input name="base_{{s}}" value="10">
+<input name="buff_{{s}}" value="0">
+→ {{d.total}} ({{d.mod}})
+</div>
 {% endfor %}
-</table>
-<h3>Core Stats</h3>
 
-<label>Level</label>
-<input type="number" name="level" value="{{level}}">
+<h2>Equipment</h2>
+<textarea name="equipment"></textarea>
 
-<label>HP</label>
-<input type="number" name="hp" value="{{hp}}">
+<h2>Inventory</h2>
+<textarea name="inventory">{{inventory}}</textarea>
 
-<label>Max HP</label>
-<input type="number" name="max_hp" value="{{max_hp}}">
-<h2>Equipment (auto parses)</h2>
-<textarea name="equipment_text" rows="6" cols="50">{{equip_text}}</textarea>
+<h2>Spells</h2>
+<textarea name="spells">{{spells}}</textarea>
 
-<br><br>
-<button type="submit">Save</button>
+<h2>Skills</h2>
+<ul>
+{% for n,v in skills %}
+<li>{{n}} +{{v}}</li>
+{% endfor %}
+</ul>
+
+<h2>Percent Effects</h2>
+<ul>
+{% for e,v in percents %}
+<li>{{e}}: {{v}}%</li>
+{% endfor %}
+</ul>
+
+<button>Save</button>
 
 </form>
 
-<p>🔗 Share this character:</p>
-<p>{{ request.url }}</p>
+<p>Share: /character/{{char_id}}</p>
 
 </body>
-</html>
