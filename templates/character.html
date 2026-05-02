@@ -114,49 +114,5 @@
 <h2>Gold</h2>
 <input name="gold" value="{{meta[4]}}">
 
-<h2>Buffs / Debuffs</h2>
 
-<div id="effects">
-{% for e in effects %}
-<div>
-{{e[2]}} ({{e[3]}}) - {{e[5]}} {{e[6]}}
-<button onclick="tick('{{e[0]}}')">Tick</button>
-</div>
-{% endfor %}
-</div>
-
-<input id="ename" placeholder="Name">
-<input id="eval" placeholder="Value">
-<input id="edur" placeholder="Duration">
-<select id="etype">
-<option value="buff">Buff</option>
-<option value="debuff">Debuff</option>
-</select>
-
-<select id="eunit">
-<option value="rounds">Rounds</option>
-<option value="hours">Hours</option>
-</select>
-
-<button onclick="addEffect()">Add</button>
-
-<script>
-function addEffect(){
-fetch(`/add_effect/${window.CID}`,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-name:ename.value,
-value:parseInt(eval.value),
-type:etype.value,
-duration:parseInt(edur.value),
-unit:eunit.value
-})
-}).then(()=>location.reload());
-}
-
-function tick(id){
-fetch(`/tick_effect/${id}`,{method:"POST"})
-.then(()=>location.reload());
-}
 </script>
