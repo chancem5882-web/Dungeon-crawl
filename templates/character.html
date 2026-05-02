@@ -3,6 +3,12 @@
 <div class="header">DUNGEON SYSTEM</div>
 
 <h1>{{name}}</h1>
+<ul>
+{% for id,name in chars %}
+<li><a href="/c/{{id}}">{{name}}</a></li>
+{% endfor %}
+</ul>
+
 
 {% if storage.mode == "EPHEMERAL" %}
 <div style="color:red;">
@@ -14,18 +20,10 @@
 </div>
 {% endif %}
 
-<ul>
-{% for id,name in chars %}
-<li><a href="/c/{{id}}">{{name}}</a></li>
-{% endfor %}
-</ul>
-
 <form method="post">
 
 <div class="container">
-<h1>{{name}}</h1>
 
-<form method="post">
 <div class="panel">
 <h2>Level {{meta[1]}}</h2>
   <h2>Level</h2>
