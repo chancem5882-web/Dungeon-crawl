@@ -2,35 +2,14 @@
 
 <div class="header">DUNGEON SYSTEM</div>
 
-<h1>{{name}}</h1>
-<ul>
-{% for id,name in chars %}
-<li><a href="/c/{{id}}">{{name}}</a></li>
-{% endfor %}
-</ul>
-
-
-{% if storage.mode == "EPHEMERAL" %}
-<div style="color:red;">
-⚠ WARNING: DATA NOT PERSISTENT (server restart will wipe characters)
-</div>
-{% else %}
-<div style="color:lime;">
-✅ Persistent storage active
-</div>
-{% endif %}
-
 <form method="post">
 
 <div class="container">
 
 <div class="panel">
 <h2>Level {{meta[1]}}</h2>
-  <h2>Level</h2>
 <input name="level" value="{{meta[1]}}">
-  <h2>Hp</h2>
 <input name="hp" value="{{meta[2]}}">
-  <h2>Max Hp</h2>
 <input name="max_hp" value="{{meta[3]}}">
 
 <div class="hp"><div style="width:{{(meta[2]/meta[3])*100}}%"></div></div>
@@ -52,8 +31,8 @@
 <div class="container">
 
 <div class="panel">
-<h2>Equipment Buffs</h2>
-<textarea name="equipment buffs" id="equip">{{meta[7]}}</textarea>
+<h2>Equipment</h2>
+<textarea name="equipment" id="equip">{{meta[7]}}</textarea>
 
 <div id="preview"></div>
 
@@ -63,7 +42,7 @@
 </div>
 
 <div class="panel">
-<h1>Skills</h1>
+<h2>Skills</h2>
 {% for n,b,e in skills %}
 <div>{{n}} = {{b+e}}</div>
 {% endfor %}
@@ -75,13 +54,17 @@
 <div class="container">
 
 <div class="panel">
-<h2>Inventory</h2>
-<textarea name="spells">{{meta[8]}}</textarea>
+<h2>Percent</h2>
+{% for n,v in percs %}
+<div>{{n}}: {{v}}%</div>
+{% endfor %}
 </div>
 
 <div class="panel">
-<h2>Spells</h2>
-<textarea name="inventory">{{meta[9]}}</textarea>
+<h2>Fans</h2>
+<input name="views" value="{{meta[4]}}">
+<input name="followers" value="{{meta[5]}}">
+<input name="favorites" value="{{meta[6]}}">
 </div>
 
 </div>
@@ -89,36 +72,17 @@
 <div class="container">
 
 <div class="panel">
-  <h2>Percent</h2>
-{% for n,v in percs %}
-<div>{{n}}: {{v}}%</div>
-{% endfor %}
+<textarea name="spells">{{meta[8]}}</textarea>
 </div>
 
 <div class="panel">
-  <h2>Fans</h2>
-  <h2>Views</h2>
-<input name="views" textarea name="{{meta[4]}}">
-  <h2>Followers</h2>
-<input name="followers" textarea name="{{meta[5]}}">
-  <h2>Favorites</h2>
-<input name="favorites" textarea name="{{meta[6]}}">  
-</div>
-
-<div class="panel">
-  <h2>Gold</h2>
-<input name="gold" textarea name={{meta[10]}}">  
+<textarea name="inventory">{{meta[9]}}</textarea>
 </div>
 
 </div>
-  
+
 <button>Save</button>
 
 </form>
 
 <script src="/static/parser.js"></script>
-
-
-
-
-
