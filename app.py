@@ -97,7 +97,12 @@ skill_matches = re.findall(
     text,
     re.IGNORECASE
 )
-
+for name, val in skill_bonus:
+    if name:  # avoid empty strings
+        c.execute("""
+        INSERT INTO skills (char_id,name,value)
+        VALUES (?,?,?)
+        """, (char_id, name, int(val)))
 for val, skill in skill_matches:
     skill = skill.strip().lower()
 
