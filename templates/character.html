@@ -1,52 +1,54 @@
-<body style="background:#0a0a0a;color:#fff;font-family:monospace;">
+<h1>Character</h1>
 
-<h1>{{name}} (Level {{level}})</h1>
+<form method="post">
 
-<!-- HP BAR -->
-<div style="width:300px;border:1px solid #f0f;">
-<div style="width:{{ (hp/max_hp)*100 }}%;background:#f0f;height:20px;"></div>
+<h2>Level & HP</h2>
+<input name="level" value="{{meta[1]}}">
+<input name="hp" value="{{meta[2]}}">
+<input name="max_hp" value="{{meta[3]}}">
+
+<div style="background:#333;width:300px">
+<div style="background:red;width:{{(meta[2]/meta[3])*100}}%;height:20px"></div>
 </div>
-<p>{{hp}} / {{max_hp}} HP</p>
-
-<form method="POST">
 
 <h2>Stats</h2>
 {% for s,d in stats.items() %}
 <div>
-{{s}}:
-<input name="base_{{s}}" value="10">
-<input name="buff_{{s}}" value="0">
-→ {{d.total}} ({{d.mod}})
+{{s}}
+<input name="base_{{s}}" value="{{d.base}}">
+<input name="buff_{{s}}" value="{{d.buff}}">
+= {{d.total}} ({{d.mod}})
 </div>
 {% endfor %}
 
-<h2>Equipment</h2>
-<textarea name="equipment"></textarea>
-
-<h2>Inventory</h2>
-<textarea name="inventory">{{inventory}}</textarea>
-
-<h2>Spells</h2>
-<textarea name="spells">{{spells}}</textarea>
+<h2>Equipment (AUTO PARSE)</h2>
+<textarea name="equipment">{{meta[7]}}</textarea>
 
 <h2>Skills</h2>
-<ul>
-{% for n,v in skills %}
-<li>{{n}} +{{v}}</li>
+{% for n,b,e in skills %}
+<div>{{n}} = {{b+e}}</div>
 {% endfor %}
-</ul>
+<input name="skill_name"><input name="skill_val">
 
-<h2>Percent Effects</h2>
-<ul>
-{% for e,v in percents %}
-<li>{{e}}: {{v}}%</li>
+<h2>Percent Bonuses</h2>
+{% for n,v in percs %}
+<div>{{n}}: {{v}}%</div>
 {% endfor %}
-</ul>
 
+<h2>Spells</h2>
+<textarea name="spells">{{meta[8]}}</textarea>
+
+<h2>Inventory</h2>
+<textarea name="inventory">{{meta[9]}}</textarea>
+
+<h2>Fans</h2>
+Views <input name="views" value="{{meta[4]}}">
+Followers <input name="followers" value="{{meta[5]}}">
+Favorites <input name="favorites" value="{{meta[6]}}">
+
+<br><br>
 <button>Save</button>
 
 </form>
 
-<p>Share: /character/{{char_id}}</p>
-
-</body>
+<p>Share link: {{request.url}}</p>
