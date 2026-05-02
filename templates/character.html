@@ -1,98 +1,52 @@
-<link rel="stylesheet" href="/static/style.css">
+<script>window.CID="{{cid}}"</script>
+<script src="/static/autosave.js"></script>
 
-<div class="header">DUNGEON SYSTEM</div>
+<h2>Gold</h2>
+<input name="gold" value="{{meta[4]}}">
 
-<form method="post">
+<h2>Buffs / Debuffs</h2>
 
-{% if storage.mode == "EPHEMERAL" %}
-<div style="color:red;">
-⚠ DATA WILL BE LOST IF SERVER RESTARTS
-</div>
-{% else %}
-<div style="color:lime;">
-✅ SAVED TO PERSISTENT DISK
-</div>
-{% endif %}  
-  
-<div class="container">
-
-<div class="panel">
-<h2>Level {{meta[1]}}</h2>
-<input name="level" value="{{meta[1]}}">
-<input name="hp" value="{{meta[2]}}">
-<input name="max_hp" value="{{meta[3]}}">
-
-<div class="hp"><div style="width:{{(meta[2]/meta[3])*100}}%"></div></div>
-</div>
-
-<div class="panel">
-<h2>Stats</h2>
-{% for s,d in stats.items() %}
-<div>{{s}}
-<input name="base_{{s}}" value="{{d.base}}">
-<input name="buff_{{s}}" value="{{d.buff}}">
-= {{d.total}} ({{d.mod}})
+<div id="effects">
+{% for e in effects %}
+<div>
+{{e[2]}} ({{e[3]}}) - {{e[5]}} {{e[6]}}
+<button onclick="tick('{{e[0]}}')">Tick</button>
 </div>
 {% endfor %}
 </div>
 
-</div>
+<input id="ename" placeholder="Name">
+<input id="eval" placeholder="Value">
+<input id="edur" placeholder="Duration">
+<select id="etype">
+<option value="buff">Buff</option>
+<option value="debuff">Debuff</option>
+</select>
 
-<div class="container">
+<select id="eunit">
+<option value="rounds">Rounds</option>
+<option value="hours">Hours</option>
+</select>
 
-<div class="panel">
-<h2>Equipment</h2>
-<textarea name="equipment" id="equip">{{meta[7]}}</textarea>
+<button onclick="addEffect()">Add</button>
 
-<div id="preview"></div>
+<script>
+function addEffect(){
+fetch(`/add_effect/${window.CID}`,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+name:ename.value,
+value:parseInt(eval.value),
+type:etype.value,
+duration:parseInt(edur.value),
+unit:eunit.value
+})
+}).then(()=>location.reload());
+}
 
-{% for e in errors %}
-<div class="error">{{e}}</div>
-{% endfor %}
-</div>
-
-<div class="panel">
-<h2>Skills</h2>
-{% for n,b,e in skills %}
-<div>{{n}} = {{b+e}}</div>
-{% endfor %}
-<input name="skill_name"><input name="skill_val">
-</div>
-
-</div>
-
-<div class="container">
-
-<div class="panel">
-<h2>Percent</h2>
-{% for n,v in percs %}
-<div>{{n}}: {{v}}%</div>
-{% endfor %}
-</div>
-
-<div class="panel">
-<h2>Fans</h2>
-<input name="views" value="{{meta[4]}}">
-<input name="followers" value="{{meta[5]}}">
-<input name="favorites" value="{{meta[6]}}">
-</div>
-
-</div>
-
-<div class="container">
-
-<div class="panel">
-<textarea name="spells">{{meta[8]}}</textarea>
-</div>
-
-<div class="panel">
-<textarea name="inventory">{{meta[9]}}</textarea>
-</div>
-
-</div>
-
-<button>Save</button>
-
-</form>
-
-<script src="/static/parser.js"></script>
+function tick(id){
+fetch(`/tick_effect/${id}`,{method:"POST"})
+.then(()=>location.reload());
+}
+</script>
