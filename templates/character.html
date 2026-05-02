@@ -14,15 +14,18 @@
 <h2>Stats</h2>
 {% for s,d in stats.items() %}
 <div>
-{{s}}
+{{s}} 
 <input name="base_{{s}}" value="{{d.base}}">
 <input name="buff_{{s}}" value="{{d.buff}}">
 = {{d.total}} ({{d.mod}})
 </div>
 {% endfor %}
 
-<h2>Equipment (AUTO PARSE)</h2>
-<textarea name="equipment">{{meta[7]}}</textarea>
+<h2>Equipment</h2>
+<textarea name="equipment" id="equip">{{meta[7]}}</textarea>
+
+<h3>🔍 Detected Bonuses</h3>
+<div id="preview"></div>
 
 <h2>Skills</h2>
 {% for n,b,e in skills %}
@@ -30,7 +33,7 @@
 {% endfor %}
 <input name="skill_name"><input name="skill_val">
 
-<h2>Percent Bonuses</h2>
+<h2>Percent</h2>
 {% for n,v in percs %}
 <div>{{n}}: {{v}}%</div>
 {% endfor %}
@@ -48,7 +51,8 @@ Favorites <input name="favorites" value="{{meta[6]}}">
 
 <br><br>
 <button>Save</button>
-
 </form>
 
-<p>Share link: {{request.url}}</p>
+<p>Share: {{request.url}}</p>
+
+<script src="/static/parser.js"></script>
