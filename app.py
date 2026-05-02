@@ -92,11 +92,23 @@ def parse_equipment(text):
         percent_bonus.append((effect.strip(), float(val)))
 
     # skill bonuses
-    skill_matches = re.findall(r'\+(\d+)\s*skill:\s*([\w\s]+)', text, re.I)
-    for val, skill in skill_matches:
-        skill_bonus.append((skill.strip(), int(val)))
+skill_matches = re.findall(
+    r'\+(\d+)\s*(?:skill\s*:?\s*|to\s+)?([a-zA-Z][a-zA-Z\s]+)',
+    text,
+    re.IGNORECASE
+)
 
-    return stat_bonus, skill_bonus, percent_bonus
+for val, skill in skill_matches:
+    skill = skill.strip().lower()
+
+    # Skip if it's actually a stat (prevents overlap)
+    if skill in ["strength", "dexterity", "constitution", "intelligence", "charisma"]:
+        continue
+
+    try:
+        skill_bonus.append((skill, int(val)))
+    except:
+        continue  # fail-safe, no crash
 
 # ---------------- ROUTES ----------------
 @app.route("/")
