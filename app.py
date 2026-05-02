@@ -1,84 +1,97 @@
 import sqlite3, uuid, re
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect
 
 app = Flask(__name__)
-DB = "db.db"
+DB="db.db"
 
-STATS = ["Strength","Intelligence","Dexterity","Constitution","Charisma"]
+STATS=["Strength","Intelligence","Dexterity","Constitution","Charisma"]
 
-# ---------- DATABASE ----------
-def init_db():
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
+# ---------- DB ----------
+def init():
+    conn=sqlite3.connect(DB)
+    c=conn.cursor()
 
-    c.execute("CREATE TABLE IF NOT EXISTS characters (id TEXT PRIMARY KEY, name TEXT)")
-    
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS stats (
-        char_id TEXT, stat TEXT,
-        base INT, buff INT, equip INT,
-        PRIMARY KEY(char_id, stat)
-    )
-    """)
+    c.execute("CREATE TABLE IF NOT EXISTS characters(id TEXT PRIMARY KEY,name TEXT)")
 
     c.execute("""
-    CREATE TABLE IF NOT EXISTS meta (
-        char_id TEXT PRIMARY KEY,
-        level INT, hp INT, max_hp INT,
-        views INT, followers INT, favorites INT,
-        equipment TEXT, spells TEXT, inventory TEXT
-    )
-    """)
+    CREATE TABLE IF NOT EXISTS stats(
+    char_id TEXT,stat TEXT,base INT,buff INT,equip INT,
+    PRIMARY KEY(char_id,stat))""")
 
     c.execute("""
-    CREATE TABLE IF NOT EXISTS skills (
-        char_id TEXT, name TEXT, base INT, equip INT,
-        PRIMARY KEY(char_id, name)
-    )
-    """)
+    CREATE TABLE IF NOT EXISTS meta(
+    char_id TEXT PRIMARY KEY,
+    level INT,hp INT,max_hp INT,
+    views INT,followers INT,favorites INT,
+    equipment TEXT,spells TEXT,inventory TEXT)""")
 
     c.execute("""
-    CREATE TABLE IF NOT EXISTS percentages (
-        char_id TEXT, name TEXT, value INT,
-        PRIMARY KEY(char_id, name)
-    )
-    """)
+    CREATE TABLE IF NOT EXISTS skills(
+    char_id TEXT,name TEXT,base INT,equip INT,
+    PRIMARY KEY(char_id,name))""")
 
-    conn.commit()
-    conn.close()
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS perc(
+    char_id TEXT,name TEXT,val INT,
+    PRIMARY KEY(char_id,name))""")
 
-# ---------- MODIFIER ----------
-def mod(v): return v // 5
+    conn.commit(); conn.close()
 
-# ---------- PARSER ----------
-def parse(text):
-    stat_bonus = {s:0 for s in STATS}
-    skill_bonus = {}
-    percent_bonus = {}
+# ---------- UTILS ----------
+def mod(v): return v//5
 
-    matches = re.findall(r'([+-]?\d+)\s*(%?)([a-zA-Z ]+)', text)
+def clean(n):
+    return n.lower().replace("skill","").strip()
 
-    for val, is_percent, name in matches:
-        val = int(val)
-        name = name.strip().lower()
+def smart_parse(text):
+    stats={s:0 for s in STATS}
+    skills={}
+    perc={}
 
-        if is_percent:
-            percent_bonus[name] = percent_bonus.get(name,0)+val
-        else:
-            # stats
-            for s in STATS:
-                if name.startswith(s[:3].lower()):
-                    stat_bonus[s]+=val
-                    break
+    patterns=[
+        r'([a-zA-Z ]+)\s*([+-]?\d+)%',
+        r'([+-]?\d+)%\s*([a-zA-Z ]+)',
+        r'([a-zA-Z ]+)\s*([+-]?\d+)',
+        r'([+-]?\d+)\s*([a-zA-Z ]+)'
+    ]
+
+    for p in patterns:
+        for m in re.findall(p,text):
+            a,b=m
+
+            if "%" in p:
+                if "%" in a:
+                    val=int(a.replace("%",""))
+                    name=clean(b)
+                else:
+                    val=int(b)
+                    name=clean(a)
+
+                perc[name]=perc.get(name,0)+val
+
             else:
-                # skill
-                skill_bonus[name] = skill_bonus.get(name,0)+val
+                if a.strip().lstrip("+-").isdigit():
+                    val=int(a)
+                    name=clean(b)
+                else:
+                    val=int(b)
+                    name=clean(a)
 
-    return stat_bonus, skill_bonus, percent_bonus
+                found=False
+                for s in STATS:
+                    if name.startswith(s[:3].lower()):
+                        stats[s]+=val
+                        found=True
+                        break
 
-# ---------- HOME ----------
+                if not found:
+                    skills[name]=skills.get(name,0)+val
+
+    return stats,skills,perc
+
+# ---------- ROUTES ----------
 @app.route("/")
-def index():
+def home():
     conn=sqlite3.connect(DB)
     c=conn.cursor()
     c.execute("SELECT * FROM characters")
@@ -86,7 +99,6 @@ def index():
     conn.close()
     return render_template("index.html",chars=chars)
 
-# ---------- CREATE ----------
 @app.route("/create",methods=["POST"])
 def create():
     cid=str(uuid.uuid4())
@@ -95,39 +107,37 @@ def create():
     conn=sqlite3.connect(DB)
     c=conn.cursor()
 
-    c.execute("INSERT INTO characters VALUES (?,?)",(cid,name))
+    c.execute("INSERT INTO characters VALUES(?,?)",(cid,name))
 
     for s in STATS:
-        c.execute("INSERT INTO stats VALUES (?,?,?,?,?)",(cid,s,10,0,0))
+        c.execute("INSERT INTO stats VALUES(?,?,?,?,?)",(cid,s,10,0,0))
 
-    c.execute("INSERT INTO meta VALUES (?,?,?,?,?,?,?,?,?,?)",
+    c.execute("INSERT INTO meta VALUES(?,?,?,?,?,?,?,?,?,?)",
               (cid,1,100,100,0,0,0,"","",""))
 
-    conn.commit()
-    conn.close()
-
+    conn.commit(); conn.close()
     return redirect(f"/c/{cid}")
 
-# ---------- CHARACTER ----------
 @app.route("/c/<cid>",methods=["GET","POST"])
 def char(cid):
     conn=sqlite3.connect(DB)
     c=conn.cursor()
 
     if request.method=="POST":
+
         # stats
         for s in STATS:
-            base=int(request.form.get(f"base_{s}",10))
-            buff=int(request.form.get(f"buff_{s}",0))
+            base=int(request.form.get(f"base_{s}",10) or 10)
+            buff=int(request.form.get(f"buff_{s}",0) or 0)
             c.execute("UPDATE stats SET base=?,buff=? WHERE char_id=? AND stat=?",
                       (base,buff,cid,s))
 
         equip_text=request.form.get("equipment","")
-        stats_b, skills_b, perc_b = parse(equip_text)
+        stat_b,skill_b,perc_b=smart_parse(equip_text)
 
         for s in STATS:
             c.execute("UPDATE stats SET equip=? WHERE char_id=? AND stat=?",
-                      (stats_b[s],cid,s))
+                      (stat_b[s],cid,s))
 
         # skills
         c.execute("DELETE FROM skills WHERE char_id=?",(cid,))
@@ -135,44 +145,41 @@ def char(cid):
         vals=request.form.getlist("skill_val")
 
         for n,v in zip(names,vals):
-            if n:
-                base=int(v)
-                equip=skills_b.get(n.lower(),0)
-                c.execute("INSERT INTO skills VALUES (?,?,?,?)",
-                          (cid,n,base,equip))
+            n=clean(n)
+            if not n: continue
+            try: base=int(v)
+            except: base=0
+
+            equip=skill_b.get(n,0)
+            c.execute("INSERT OR REPLACE INTO skills VALUES(?,?,?,?)",
+                      (cid,n,base,equip))
+
+        # add equip-only skills
+        for k,v in skill_b.items():
+            c.execute("INSERT OR IGNORE INTO skills VALUES(?,?,?,?)",
+                      (cid,k,0,v))
 
         # percentages
-        c.execute("DELETE FROM percentages WHERE char_id=?",(cid,))
+        c.execute("DELETE FROM perc WHERE char_id=?",(cid,))
         for k,v in perc_b.items():
-            c.execute("INSERT INTO percentages VALUES (?,?,?)",(cid,k,v))
+            c.execute("INSERT INTO perc VALUES(?,?,?)",(cid,k,v))
 
         # meta
         c.execute("""
         UPDATE meta SET level=?,hp=?,max_hp=?,views=?,followers=?,favorites=?,
-        equipment=?,spells=?,inventory=?
-        WHERE char_id=?
-        """,(
-            request.form["level"],
-            request.form["hp"],
-            request.form["max_hp"],
-            request.form["views"],
-            request.form["followers"],
-            request.form["favorites"],
-            equip_text,
-            request.form["spells"],
-            request.form["inventory"],
-            cid
-        ))
+        equipment=?,spells=?,inventory=? WHERE char_id=?""",
+        (request.form["level"],request.form["hp"],request.form["max_hp"],
+         request.form["views"],request.form["followers"],request.form["favorites"],
+         equip_text,request.form["spells"],request.form["inventory"],cid))
 
         conn.commit()
 
     # LOAD
     c.execute("SELECT stat,base,buff,equip FROM stats WHERE char_id=?",(cid,))
-    rows=c.fetchall()
     stats={}
-    for s,b,bu,e in rows:
-        total=b+bu+e
-        stats[s]={"base":b,"buff":bu,"equip":e,"total":total,"mod":mod(total)}
+    for s,b,bu,e in c.fetchall():
+        t=b+bu+e
+        stats[s]={"base":b,"buff":bu,"total":t,"mod":mod(t)}
 
     c.execute("SELECT * FROM meta WHERE char_id=?",(cid,))
     meta=c.fetchone()
@@ -180,16 +187,15 @@ def char(cid):
     c.execute("SELECT name,base,equip FROM skills WHERE char_id=?",(cid,))
     skills=c.fetchall()
 
-    c.execute("SELECT name,value FROM percentages WHERE char_id=?",(cid,))
+    c.execute("SELECT name,val FROM perc WHERE char_id=?",(cid,))
     percs=c.fetchall()
 
     conn.close()
 
     return render_template("character.html",
-        cid=cid,stats=stats,meta=meta,
-        skills=skills,percs=percs)
+        cid=cid,stats=stats,meta=meta,skills=skills,percs=percs)
 
-init_db()
+init()
 
 if __name__=="__main__":
     app.run()
