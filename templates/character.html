@@ -14,11 +14,6 @@
 </div>
 {% endif %}
 
-<form action="/create" method="post">
-<input name="name" placeholder="Name">
-<button>Create</button>
-</form>
-
 <ul>
 {% for id,name in chars %}
 <li><a href="/c/{{id}}">{{name}}</a></li>
