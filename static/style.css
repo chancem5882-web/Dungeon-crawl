@@ -1,0 +1,11 @@
+body {background:#000;color:#eee;font-family:monospace;margin:0;}
+.header {text-align:center;color:#ff2bd6;padding:10px;border-bottom:2px solid #ff2bd6;}
+.container {display:flex;gap:20px;padding:20px;}
+.panel {flex:1;border:1px solid #ff2bd6;padding:10px;background:#111;}
+.hp {background:#333;height:20px;}
+.hp div {background:#ff2bd6;height:100%;}
+input,textarea {background:#000;color:#fff;border:1px solid #555;}
+.preview-stats{color:#4da6ff;}
+.preview-skills{color:#4dff88;}
+.preview-perc{color:#c94dff;}
+.error{color:red;}
