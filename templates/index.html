@@ -1,14 +1,12 @@
-<body style="background:#000;color:#fff;font-family:monospace;">
-<h1>DCC Campaign Manager</h1>
+<h1>DCC System</h1>
 
-<form method="POST" action="/create">
-<input name="name" placeholder="Character Name">
+<form action="/create" method="post">
+<input name="name" placeholder="Name">
 <button>Create</button>
 </form>
 
 <ul>
 {% for id,name in chars %}
-<li><a href="/character/{{id}}">{{name}}</a></li>
+<li><a href="/c/{{id}}">{{name}}</a></li>
 {% endfor %}
 </ul>
-</body>
