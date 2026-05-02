@@ -14,7 +14,7 @@
 <h2>Stats</h2>
 {% for s,d in stats.items() %}
 <div>
-{{s}} 
+{{s}}
 <input name="base_{{s}}" value="{{d.base}}">
 <input name="buff_{{s}}" value="{{d.buff}}">
 = {{d.total}} ({{d.mod}})
@@ -26,6 +26,11 @@
 
 <h3>🔍 Detected Bonuses</h3>
 <div id="preview"></div>
+
+<h3 style="color:red;">Parsing Issues</h3>
+{% for e in errors %}
+<div>{{e}}</div>
+{% endfor %}
 
 <h2>Skills</h2>
 {% for n,b,e in skills %}
