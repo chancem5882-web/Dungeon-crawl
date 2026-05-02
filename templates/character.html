@@ -2,6 +2,29 @@
 
 <div class="header">DUNGEON SYSTEM</div>
 
+<h1>DCC SYSTEM</h1>
+
+{% if storage.mode == "EPHEMERAL" %}
+<div style="color:red;">
+⚠ WARNING: DATA NOT PERSISTENT (server restart will wipe characters)
+</div>
+{% else %}
+<div style="color:lime;">
+✅ Persistent storage active
+</div>
+{% endif %}
+
+<form action="/create" method="post">
+<input name="name" placeholder="Name">
+<button>Create</button>
+</form>
+
+<ul>
+{% for id,name in chars %}
+<li><a href="/c/{{id}}">{{name}}</a></li>
+{% endfor %}
+</ul>
+
 <form method="post">
 
 <div class="container">
