@@ -1,11 +1,6 @@
 services:
   - type: web
-    name: dungeon-control-panel
-    runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:appservices:
-  - type: web
-    name: dungeon-control-panel
+    name: dcc-control-panel
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
