@@ -1,9 +1,5 @@
 <link rel="stylesheet" href="/static/style.css">
 
-<div class="live" id="liveSave">
-AUTO SAVED
-</div>
-
 <div class="header">
 DUNGEON CONTROL PANEL
 </div>
@@ -25,7 +21,10 @@ enctype="multipart/form-data"
 >
 
 <input type="file" name="image">
-<button>Upload Portrait</button>
+
+<button type="submit">
+Upload Portrait
+</button>
 
 </form>
 
@@ -40,63 +39,14 @@ enctype="multipart/form-data"
 <label>Max HP</label>
 <input name="max_hp" value="{{meta[3]}}">
 
-<div class="hpbar">
-<div
-class="hpfill"
-style="width:{{(meta[2]/meta[3])*100}}%"
-></div>
-</div>
-
 <label>Gold</label>
 <input name="gold" value="{{meta[4]}}">
-
-</div>
-
-<div class="card">
-
-<h2>Fans</h2>
-
-<label>Views</label>
-<input name="views" value="{{meta[5]}}">
-
-<label>Followers</label>
-<input name="followers" value="{{meta[6]}}">
-
-<label>Favorites</label>
-<input name="favorites" value="{{meta[7]}}">
 
 </div>
 
 </div>
 
 <div>
-
-<div class="card">
-
-<h2>Stats</h2>
-
-{% for s,d in stats.items() %}
-
-<div class="stat">
-<div>{{s}}</div>
-<div>{{d.total}} (+{{d.mod}})</div>
-</div>
-
-<label>Base</label>
-<input
-name="base_{{s}}"
-value="{{d.base}}"
->
-
-<label>Buff/Debuff</label>
-<input
-name="buff_{{s}}"
-value="{{d.buff}}"
->
-
-{% endfor %}
-
-</div>
 
 <div class="card">
 
@@ -123,7 +73,7 @@ rows="12"
 </div>
 {% endfor %}
 
-<h3>Parsed Conditions</h3>
+<h3>Conditions</h3>
 
 {% for c in conditions %}
 <div class="condition">
@@ -133,120 +83,8 @@ rows="12"
 
 </div>
 
-<div class="card">
-
-<h2>Inventory</h2>
-
-<textarea
-name="inventory"
-rows="8"
->{{meta[9]}}</textarea>
-
-<h2>Spells</h2>
-
-<textarea
-name="spells"
-rows="8"
->{{meta[10]}}</textarea>
-
-</div>
-
-<div class="card">
-
-<h2>Buffs / Debuffs</h2>
-
-<div id="effects">
-
-{% for e in effects %}
-
-<div class="effect">
-
-<input
-class="ename"
-value="{{e[0]}}"
-placeholder="Effect Name"
->
-
-<input
-class="eval"
-value="{{e[1]}}"
-placeholder="Value"
->
-
-<input
-class="edur"
-value="{{e[2]}}"
-placeholder="Duration"
->
-
-<select class="etype">
-<option
-{% if e[3]=='rounds' %}
-selected
-{% endif %}
->
-rounds
-</option>
-
-<option
-{% if e[3]=='hours' %}
-selected
-{% endif %}
->
-hours
-</option>
-</select>
-
-Buff?
-<input
-type="checkbox"
-class="ebuff"
-{% if e[4]==1 %}
-checked
-{% endif %}
->
-
-</div>
-
-{% endfor %}
-
-</div>
-
-<button type="button" onclick="addEffect()">
-+ Add Effect
-</button>
-
 </div>
 
 </div>
-
-</div>
-
-<script>
-
-function addEffect(){
-
-    let d = document.createElement("div");
-
-    d.className = "effect";
-
-    d.innerHTML = `
-    <input class="ename" placeholder="Effect Name">
-    <input class="eval" placeholder="Value">
-    <input class="edur" placeholder="Duration">
-    <select class="etype">
-        <option>rounds</option>
-        <option>hours</option>
-    </select>
-    Buff?
-    <input type="checkbox" class="ebuff">
-    `;
-
-    document
-    .getElementById("effects")
-    .appendChild(d);
-}
-
-</script>
 
 <script src="/static/app.js"></script>
