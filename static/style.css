@@ -1,11 +1,74 @@
-body {background:#000;color:#eee;font-family:monospace;margin:0;}
-.header {text-align:center;color:#ff2bd6;padding:10px;border-bottom:2px solid #ff2bd6;}
-.container {display:flex;gap:20px;padding:20px;}
-.panel {flex:1;border:1px solid #ff2bd6;padding:10px;background:#111;}
-.hp {background:#333;height:20px;}
-.hp div {background:#ff2bd6;height:100%;}
-input,textarea {background:#000;color:#fff;border:1px solid #555;}
-.preview-stats{color:#4da6ff;}
-.preview-skills{color:#4dff88;}
-.preview-perc{color:#c94dff;}
-.error{color:red;}
+body{
+background:#0a0a0a;
+color:#eee;
+font-family:Arial;
+margin:0;
+}
+
+.header{
+padding:15px;
+background:#111;
+border-bottom:2px solid #ff00ff;
+font-size:28px;
+text-align:center;
+}
+
+.main{
+display:grid;
+grid-template-columns:350px 1fr;
+gap:20px;
+padding:20px;
+}
+
+.card{
+background:#111;
+border:1px solid #333;
+border-radius:12px;
+padding:15px;
+}
+
+.portrait{
+width:100%;
+border-radius:12px;
+}
+
+.stat{
+display:flex;
+justify-content:space-between;
+padding:4px 0;
+}
+
+textarea,input,select{
+width:100%;
+background:#000;
+color:#fff;
+border:1px solid #444;
+padding:8px;
+margin-top:5px;
+margin-bottom:10px;
+}
+
+.hpbar{
+height:22px;
+background:#222;
+border-radius:12px;
+overflow:hidden;
+}
+
+.hpfill{
+height:100%;
+background:#ff0055;
+}
+
+.skill{
+padding:4px;
+border-bottom:1px solid #222;
+}
+
+.condition{
+display:inline-block;
+background:#6600aa;
+padding:6px 10px;
+margin:4px;
+border-radius:10px;
+}
