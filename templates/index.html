@@ -1,22 +1,12 @@
-<h1>DCC SYSTEM</h1>
-
-{% if storage.mode == "EPHEMERAL" %}
-<div style="color:red;">
-⚠ WARNING: DATA NOT PERSISTENT (server restart will wipe characters)
-</div>
-{% else %}
-<div style="color:lime;">
-✅ Persistent storage active
-</div>
-{% endif %}
+<h1>DCC CONTROL PANEL</h1>
 
 <form action="/create" method="post">
-<input name="name" placeholder="Name">
-<button>Create</button>
+<input name="name" placeholder="Character Name">
+<button>Create Character</button>
 </form>
 
-<ul>
-{% for id,name in chars %}
-<li><a href="/c/{{id}}">{{name}}</a></li>
+{% for c in chars %}
+<div>
+<a href="/c/{{c[0]}}">{{c[1]}}</a>
+</div>
 {% endfor %}
-</ul>
