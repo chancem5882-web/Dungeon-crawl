@@ -1,88 +1,161 @@
 <link rel="stylesheet" href="/static/style.css">
 
-<div class="header">DUNGEON SYSTEM</div>
-
-<form method="post">
-
-<div class="container">
-
-<div class="panel">
-<h2>Level {{meta[1]}}</h2>
-<input name="level" value="{{meta[1]}}">
-<input name="hp" value="{{meta[2]}}">
-<input name="max_hp" value="{{meta[3]}}">
-
-<div class="hp"><div style="width:{{(meta[2]/meta[3])*100}}%"></div></div>
+<div class="header">
+DUNGEON CONTROL PANEL
 </div>
 
-<div class="panel">
-<h2>Stats</h2>
-{% for s,d in stats.items() %}
-<div>{{s}}
-<input name="base_{{s}}" value="{{d.base}}">
-<input name="buff_{{s}}" value="{{d.buff}}">
-= {{d.total}} ({{d.mod}})
-</div>
-{% endfor %}
-</div>
+<div class="main">
 
-</div>
+<div class="card">
 
-<div class="container">
+{% if character[2] %}
+<img src="/{{character[2]}}" class="portrait">
+{% endif %}
 
-<div class="panel">
-<h2>Equipment</h2>
-<textarea name="equipment" id="equip">{{meta[7]}}</textarea>
-
-<div id="preview"></div>
-
-{% for e in errors %}
-<div class="error">{{e}}</div>
-{% endfor %}
-</div>
-
-<div class="panel">
-<h2>Skills</h2>
-{% for n,b,e in skills %}
-<div>{{n}} = {{b+e}}</div>
-{% endfor %}
-<input name="skill_name"><input name="skill_val">
-</div>
-
-</div>
-
-<div class="container">
-
-<div class="panel">
-<h2>Percent</h2>
-{% for n,v in percs %}
-<div>{{n}}: {{v}}%</div>
-{% endfor %}
-</div>
-
-<div class="panel">
-<h2>Fans</h2>
-<input name="views" value="{{meta[4]}}">
-<input name="followers" value="{{meta[5]}}">
-<input name="favorites" value="{{meta[6]}}">
-</div>
-
-</div>
-
-<div class="container">
-
-<div class="panel">
-<textarea name="spells">{{meta[8]}}</textarea>
-</div>
-
-<div class="panel">
-<textarea name="inventory">{{meta[9]}}</textarea>
-</div>
-
-</div>
-
-<button>Save</button>
-
+<form action="/upload/{{character[0]}}" method="post" enctype="multipart/form-data">
+<input type="file" name="image">
+<button>Upload Portrait</button>
 </form>
 
-<script src="/static/parser.js"></script>
+<h2>{{character[1]}}</h2>
+
+<label>Level</label>
+<input name="level" value="{{meta[1]}}">
+
+<label>HP</label>
+<input name="hp" value="{{meta[2]}}">
+
+<label>Max HP</label>
+<input name="max_hp" value="{{meta[3]}}">
+
+<div class="hpbar">
+<div class="hpfill" style="width:{{(meta[2]/meta[3])*100}}%"></div>
+</div>
+
+<label>Gold</label>
+<input name="gold" value="{{meta[4]}}">
+
+</div>
+
+<div>
+
+<div class="card">
+
+<h2>Stats</h2>
+
+{% for s,d in stats.items() %}
+<div class="stat">
+<div>{{s}}</div>
+<div>{{d.total}} (+{{d.mod}})</div>
+</div>
+
+<input name="base_{{s}}" value="{{d.base}}">
+<input name="buff_{{s}}" value="{{d.buff}}">
+{% endfor %}
+
+</div>
+
+<div class="card">
+
+<h2>Inventory</h2>
+
+<textarea name="inventory" rows="12">{{meta[10]}}</textarea>
+
+<h3>Auto Parsed Skills</h3>
+{% for s in skills %}
+<div class="skill">{{s[1]}} +{{s[2]}}</div>
+{% endfor %}
+
+<h3>Percentages</h3>
+{% for p in percs %}
+<div class="skill">{{p[1]}} {{p[2]}}%</div>
+{% endfor %}
+
+<h3>Conditions</h3>
+{% for c in conds %}
+<div class="condition">{{c[1]}}</div>
+{% endfor %}
+
+</div>
+
+<div class="card">
+
+<h2>Spells</h2>
+<textarea name="spells" rows="8">{{meta[9]}}</textarea>
+
+<h2>Equipment</h2>
+<textarea name="equipment" rows="8">{{meta[8]}}</textarea>
+
+</div>
+
+<div class="card">
+
+<h2>Fans</h2>
+
+<label>Views</label>
+<input name="views" value="{{meta[5]}}">
+
+<label>Followers</label>
+<input name="followers" value="{{meta[6]}}">
+
+<label>Favorites</label>
+<input name="favorites" value="{{meta[7]}}">
+
+</div>
+
+<div class="card">
+
+<h2>Buffs & Debuffs</h2>
+
+<div id="effects">
+
+{% for e in effects %}
+<div class="effect">
+<input class="ename" value="{{e[0]}}">
+<input class="eval" value="{{e[1]}}">
+<input class="edur" value="{{e[2]}}">
+
+<select class="etype">
+<option {% if e[3]=='rounds' %}selected{% endif %}>rounds</option>
+<option {% if e[3]=='hours' %}selected{% endif %}>hours</option>
+</select>
+
+Buff?
+<input type="checkbox" class="ebuff" {% if e[4]==1 %}checked{% endif %}>
+</div>
+{% endfor %}
+
+</div>
+
+<button type="button" onclick="addEffect()">+ Add Effect</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+function addEffect(){
+
+let d=document.createElement("div");
+
+d.className="effect";
+
+d.innerHTML=`
+<input class="ename" placeholder="name">
+<input class="eval" placeholder="value">
+<input class="edur" placeholder="duration">
+<select class="etype">
+<option>rounds</option>
+<option>hours</option>
+</select>
+Buff?
+<input type="checkbox" class="ebuff">
+`;
+
+document.getElementById("effects").appendChild(d);
+}
+</script>
+
+<script src="/static/autosave.js"></script>
