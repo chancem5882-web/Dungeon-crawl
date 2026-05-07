@@ -1,28 +1,31 @@
 <link rel="stylesheet" href="/static/style.css">
 
 <div class="header">
-DUNGEON CONTROL PANEL
+    DUNGEON CONTROL PANEL
 </div>
 
-<div class="layout">
+<div class="main">
+
+<!-- LEFT -->
 
 <div>
 
 <div class="card">
 
 {% if character[2] %}
-<img src="{{character[2]}}" class="portrait">
+<img
+src="{{character[2]}}"
+class="portrait">
 {% endif %}
 
 <form
 action="/upload/{{character[0]}}"
 method="post"
-enctype="multipart/form-data"
->
+enctype="multipart/form-data">
 
 <input type="file" name="image">
 
-<button type="submit">
+<button>
 Upload Portrait
 </button>
 
@@ -31,60 +34,289 @@ Upload Portrait
 <h2>{{character[1]}}</h2>
 
 <label>Level</label>
-<input name="level" value="{{meta[1]}}">
+<input
+name="level"
+value="{{meta[1]}}">
 
 <label>HP</label>
-<input name="hp" value="{{meta[2]}}">
+<input
+name="hp"
+value="{{meta[2]}}">
 
 <label>Max HP</label>
-<input name="max_hp" value="{{meta[3]}}">
+<input
+name="max_hp"
+value="{{meta[3]}}">
+
+<div class="hpbar">
+<div
+class="hpfill"
+style="width:{{(meta[2]/meta[3])*100}}%">
+</div>
+</div>
 
 <label>Gold</label>
-<input name="gold" value="{{meta[4]}}">
+<input
+name="gold"
+value="{{meta[4]}}">
+
+</div>
+
+<div class="card">
+
+<h2 class="section-title">
+Fans
+</h2>
+
+<label>Views</label>
+<input
+name="views"
+value="{{meta[5]}}">
+
+<label>Followers</label>
+<input
+name="followers"
+value="{{meta[6]}}">
+
+<label>Favorites</label>
+<input
+name="favorites"
+value="{{meta[7]}}">
 
 </div>
 
 </div>
+
+<!-- RIGHT -->
 
 <div>
 
 <div class="card">
 
-<h2>Equipment</h2>
+<h2 class="section-title">
+Stats
+</h2>
+
+{% for s,d in stats.items() %}
+
+<div class="stat">
+<div>{{s}}</div>
+<div>
+{{d.total}} (+{{d.mod}})
+</div>
+</div>
+
+<label>Base</label>
+<input
+name="base_{{s}}"
+value="{{d.base}}">
+
+<label>Buff</label>
+<input
+name="buff_{{s}}"
+value="{{d.buff}}">
+
+{% endfor %}
+
+</div>
+
+<div class="card">
+
+<h2 class="section-title">
+Equipment
+</h2>
 
 <textarea
 name="equipment"
-rows="12"
->{{meta[8]}}</textarea>
+rows="12">{{meta[8]}}</textarea>
 
-<h3>Parsed Skills</h3>
+<button onclick="updateCharacter()">
+Update Equipment Parsing
+</button>
+
+</div>
+
+<div class="card">
+
+<h2 class="section-title">
+Parsed Skills
+</h2>
 
 {% for s in skills %}
+
 <div class="skill">
 {{s[1]}} +{{s[2]}}
 </div>
+
 {% endfor %}
 
-<h3>Parsed Percentages</h3>
+<h2 class="section-title">
+Percentages
+</h2>
 
-{% for p in percentages %}
+{% for p in percs %}
+
 <div class="skill">
 {{p[1]}} {{p[2]}}%
 </div>
+
 {% endfor %}
 
-<h3>Conditions</h3>
+<h2 class="section-title">
+Conditions
+</h2>
 
-{% for c in conditions %}
+{% for c in conds %}
+
 <div class="condition">
 {{c[1]}}
 </div>
+
 {% endfor %}
 
 </div>
 
+<div class="card">
+
+<h2 class="section-title">
+Inventory
+</h2>
+
+<textarea
+name="inventory"
+rows="8">{{meta[9]}}</textarea>
+
+</div>
+
+<div class="card">
+
+<h2 class="section-title">
+Spells
+</h2>
+
+<textarea
+name="spells"
+rows="8">{{meta[10]}}</textarea>
+
+</div>
+
+<div class="card">
+
+<h2 class="section-title">
+Buffs & Debuffs
+</h2>
+
+<div id="effects">
+
+{% for e in effects %}
+
+<div class="effect">
+
+<input
+class="ename"
+value="{{e[0]}}">
+
+<input
+class="eval"
+value="{{e[1]}}">
+
+<input
+class="edur"
+value="{{e[2]}}">
+
+<select class="etype">
+
+<option
+{% if e[3]=='rounds' %}
+selected
+{% endif %}>
+rounds
+</option>
+
+<option
+{% if e[3]=='hours' %}
+selected
+{% endif %}>
+hours
+</option>
+
+</select>
+
+Buff?
+<input
+type="checkbox"
+class="ebuff"
+{% if e[4]==1 %}
+checked
+{% endif %}>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+<button
+type="button"
+onclick="addEffect()">
+
++ Add Effect
+
+</button>
+
+</div>
+
+<button
+style="width:100%;font-size:22px;"
+onclick="updateCharacter()">
+
+UPDATE CHARACTER
+
+</button>
+
 </div>
 
 </div>
+
+<script>
+
+function addEffect(){
+
+    let d = document.createElement("div");
+
+    d.className = "effect";
+
+    d.innerHTML = `
+
+    <input
+    class="ename"
+    placeholder="Effect Name">
+
+    <input
+    class="eval"
+    placeholder="Value">
+
+    <input
+    class="edur"
+    placeholder="Duration">
+
+    <select class="etype">
+        <option>rounds</option>
+        <option>hours</option>
+    </select>
+
+    Buff?
+    <input
+    type="checkbox"
+    class="ebuff">
+
+    `;
+
+    document
+    .getElementById("effects")
+    .appendChild(d);
+}
+
+</script>
 
 <script src="/static/app.js"></script>
