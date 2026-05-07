@@ -1,14 +1,33 @@
-<h1>DUNGEON CONTROL PANEL</h1>
+<link rel="stylesheet" href="/static/style.css">
+
+<div class="header">
+    DUNGEON CONTROL PANEL
+</div>
+
+<div style="padding:20px;">
 
 <form action="/create" method="post">
-<input name="name" placeholder="Character Name">
+
+<input
+name="name"
+placeholder="Character Name">
+
 <button>Create Character</button>
+
 </form>
 
+<br>
+
 {% for c in chars %}
-<div>
+
+<div class="card">
+
 <a href="/c/{{c[0]}}">
 {{c[1]}}
 </a>
+
 </div>
+
 {% endfor %}
+
+</div>
