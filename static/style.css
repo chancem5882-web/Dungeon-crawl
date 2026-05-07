@@ -1,19 +1,19 @@
 body{
-background:#0a0a0a;
+background:#0b0b0b;
 color:#eee;
 font-family:Arial;
 margin:0;
 }
 
 .header{
-padding:15px;
 background:#111;
-border-bottom:2px solid #ff00ff;
+padding:20px;
 font-size:28px;
 text-align:center;
+border-bottom:2px solid #ff00ff;
 }
 
-.main{
+.layout{
 display:grid;
 grid-template-columns:350px 1fr;
 gap:20px;
@@ -22,34 +22,38 @@ padding:20px;
 
 .card{
 background:#111;
-border:1px solid #333;
-border-radius:12px;
 padding:15px;
+border-radius:12px;
+border:1px solid #333;
+margin-bottom:20px;
 }
 
 .portrait{
 width:100%;
 border-radius:12px;
+margin-bottom:15px;
+}
+
+textarea,input,select{
+width:100%;
+padding:10px;
+background:#000;
+color:white;
+border:1px solid #444;
+margin-top:5px;
+margin-bottom:10px;
+box-sizing:border-box;
 }
 
 .stat{
 display:flex;
 justify-content:space-between;
-padding:4px 0;
-}
-
-textarea,input,select{
-width:100%;
-background:#000;
-color:#fff;
-border:1px solid #444;
-padding:8px;
-margin-top:5px;
-margin-bottom:10px;
+padding:6px 0;
+border-bottom:1px solid #222;
 }
 
 .hpbar{
-height:22px;
+height:24px;
 background:#222;
 border-radius:12px;
 overflow:hidden;
@@ -57,18 +61,36 @@ overflow:hidden;
 
 .hpfill{
 height:100%;
-background:#ff0055;
+background:#ff0044;
 }
 
 .skill{
-padding:4px;
+padding:5px;
 border-bottom:1px solid #222;
 }
 
 .condition{
 display:inline-block;
-background:#6600aa;
 padding:6px 10px;
-margin:4px;
+background:#6600aa;
 border-radius:10px;
+margin:4px;
+}
+
+.effect{
+border:1px solid #333;
+padding:10px;
+margin-bottom:10px;
+border-radius:10px;
+}
+
+.live{
+position:fixed;
+top:10px;
+right:10px;
+background:#00aa44;
+padding:10px;
+border-radius:10px;
+opacity:0;
+transition:0.3s;
 }
