@@ -1,4 +1,4 @@
-<h1>DCC CONTROL PANEL</h1>
+<h1>DUNGEON CONTROL PANEL</h1>
 
 <form action="/create" method="post">
 <input name="name" placeholder="Character Name">
@@ -7,6 +7,8 @@
 
 {% for c in chars %}
 <div>
-<a href="/c/{{c[0]}}">{{c[1]}}</a>
+<a href="/c/{{c[0]}}">
+{{c[1]}}
+</a>
 </div>
 {% endfor %}
