@@ -1,176 +1,221 @@
 import sqlite3, uuid, re, os
-from flask import Flask, render_template, request, redirect, jsonify
+from flask import Flask, render_template, request, redirect, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = "static/uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# =========================================
+# STORAGE
+# =========================================
 
-STATS = ["Strength","Intelligence","Dexterity","Constitution","Charisma"]
-
-# ================= STORAGE =================
 def get_storage():
-    persistent="/var/data"
-    fallback="./data"
+
+    persistent = "/var/data"
+    fallback = "./data"
 
     if os.path.exists(persistent):
-        mode="PERSISTENT"
-        path=persistent
+        path = persistent
+        mode = "PERSISTENT"
     else:
-        mode="EPHEMERAL"
-        path=fallback
+        path = fallback
+        mode = "EPHEMERAL"
 
     os.makedirs(path, exist_ok=True)
 
     return {
         "mode": mode,
-        "db": os.path.join(path,"db.db")
+        "path": path,
+        "db": os.path.join(path, "db.db")
     }
 
-STORAGE=get_storage()
+STORAGE = get_storage()
+
+UPLOAD_FOLDER = os.path.join(STORAGE["path"], "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# =========================================
+# DATABASE
+# =========================================
+
+STATS = [
+    "Strength",
+    "Intelligence",
+    "Dexterity",
+    "Constitution",
+    "Charisma"
+]
 
 def get_conn():
-    conn=sqlite3.connect(STORAGE["db"], timeout=10)
+
+    conn = sqlite3.connect(STORAGE["db"], timeout=10)
     conn.execute("PRAGMA journal_mode=WAL;")
+
     return conn
 
-# ================= INIT =================
 def init():
-    conn=get_conn()
-    c=conn.cursor()
 
-    c.execute("CREATE TABLE IF NOT EXISTS characters(id TEXT PRIMARY KEY,name TEXT,image TEXT)")
+    conn = get_conn()
+    c = conn.cursor()
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS characters(
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        image TEXT
+    )
+    """)
 
     c.execute("""
     CREATE TABLE IF NOT EXISTS stats(
-    char_id TEXT,
-    stat TEXT,
-    base INT,
-    buff INT,
-    equip INT,
-    PRIMARY KEY(char_id,stat))
+        char_id TEXT,
+        stat TEXT,
+        base INT,
+        buff INT,
+        equip INT,
+        PRIMARY KEY(char_id, stat)
+    )
     """)
 
     c.execute("""
     CREATE TABLE IF NOT EXISTS meta(
-    char_id TEXT PRIMARY KEY,
-    level INT,
-    hp INT,
-    max_hp INT,
-    gold INT,
-    views INT,
-    followers INT,
-    favorites INT,
-    equipment TEXT,
-    spells TEXT,
-    inventory TEXT)
+        char_id TEXT PRIMARY KEY,
+        level INT,
+        hp INT,
+        max_hp INT,
+        gold INT,
+        views INT,
+        followers INT,
+        favorites INT,
+        equipment TEXT,
+        inventory TEXT,
+        spells TEXT
+    )
     """)
 
     c.execute("""
     CREATE TABLE IF NOT EXISTS skills(
-    char_id TEXT,
-    name TEXT,
-    val INT,
-    PRIMARY KEY(char_id,name))
+        char_id TEXT,
+        name TEXT,
+        val INT,
+        PRIMARY KEY(char_id, name)
+    )
     """)
 
     c.execute("""
-    CREATE TABLE IF NOT EXISTS perc(
-    char_id TEXT,
-    name TEXT,
-    val INT,
-    PRIMARY KEY(char_id,name))
+    CREATE TABLE IF NOT EXISTS percentages(
+        char_id TEXT,
+        name TEXT,
+        val INT,
+        PRIMARY KEY(char_id, name)
+    )
     """)
 
     c.execute("""
     CREATE TABLE IF NOT EXISTS conditions(
-    char_id TEXT,
-    name TEXT,
-    PRIMARY KEY(char_id,name))
+        char_id TEXT,
+        name TEXT,
+        PRIMARY KEY(char_id, name)
+    )
     """)
 
     c.execute("""
     CREATE TABLE IF NOT EXISTS effects(
-    id TEXT PRIMARY KEY,
-    char_id TEXT,
-    name TEXT,
-    value INT,
-    duration INT,
-    type TEXT,
-    is_buff INT)
+        id TEXT PRIMARY KEY,
+        char_id TEXT,
+        name TEXT,
+        value INT,
+        duration INT,
+        duration_type TEXT,
+        is_buff INT
+    )
     """)
 
     conn.commit()
     conn.close()
 
-# ================= PARSER =================
-def clean(n):
-    return re.sub(r'\s+',' ',(n or "").lower()).strip()
+# =========================================
+# PARSER
+# =========================================
 
-def safe_int(v):
-    try:return int(v)
-    except:return None
+def clean(t):
+    return re.sub(r'\s+', ' ', (t or "").lower()).strip()
 
-def parse_inventory(text):
+def parse_equipment(text):
 
-    stats={s:0 for s in STATS}
-    skills={}
-    perc={}
-    conditions=[]
+    stats = {s:0 for s in STATS}
+    skills = {}
+    perc = {}
+    conditions = []
 
     for line in (text or "").split("\n"):
 
         # CONDITIONS
-        for c in re.findall(r'\((.*?)\)',line):
-            c=clean(c)
+        for c in re.findall(r'\((.*?)\)', line):
+
+            c = clean(c)
+
             if c and c not in conditions:
                 conditions.append(c)
 
         # PERCENTAGES
-        for m in re.finditer(r'([+-]?\d+)\s*%\s*([a-zA-Z ]+)|([a-zA-Z ]+)\s*([+-]?\d+)\s*%',line):
+        for m in re.finditer(
+            r'([+-]?\d+)\s*%\s*([a-zA-Z ]+)'
+            r'|'
+            r'([a-zA-Z ]+)\s*([+-]?\d+)\s*%',
+            line
+        ):
 
-            a,b,c,d=m.groups()
+            a,b,c,d = m.groups()
 
-            val=safe_int(a or d)
-            name=clean(b or c)
+            val = int(a or d)
+            name = clean(b or c)
 
-            if val is not None and name:
-                perc[name]=perc.get(name,0)+val
+            perc[name] = perc.get(name,0) + val
 
         # STATS / SKILLS
-        for m in re.finditer(r'([+-]?\d+)\s*([a-zA-Z ]+)|([a-zA-Z ]+)\s*([+-]?\d+)',line):
+        for m in re.finditer(
+            r'([+-]?\d+)\s*([a-zA-Z ]+)'
+            r'|'
+            r'([a-zA-Z ]+)\s*([+-]?\d+)',
+            line
+        ):
 
-            a,b,c,d=m.groups()
+            a,b,c,d = m.groups()
 
-            val=safe_int(a or d)
-            name=clean(b or c)
-
-            if val is None or not name:
+            try:
+                val = int(a or d)
+            except:
                 continue
 
-            matched=False
+            name = clean(b or c)
+
+            matched = False
 
             for s in STATS:
+
                 if name.startswith(s[:3].lower()):
-                    stats[s]+=val
-                    matched=True
+
+                    stats[s] += val
+                    matched = True
                     break
 
-            if not matched:
-                skills[name]=skills.get(name,0)+val
+            if not matched and name:
+                skills[name] = skills.get(name,0) + val
 
-    return stats,skills,perc,conditions
+    return stats, skills, perc, conditions
 
-# ================= ROUTES =================
+# =========================================
+# ROUTES
+# =========================================
+
 @app.route("/")
 def home():
 
-    conn=get_conn()
-    c=conn.cursor()
+    conn = get_conn()
+    c = conn.cursor()
 
     c.execute("SELECT * FROM characters")
-    chars=c.fetchall()
+    chars = c.fetchall()
 
     conn.close()
 
@@ -180,76 +225,122 @@ def home():
         storage=STORAGE
     )
 
-@app.route("/create",methods=["POST"])
+@app.route("/create", methods=["POST"])
 def create():
 
-    cid=str(uuid.uuid4())
-    name=request.form.get("name","Crawler")
+    cid = str(uuid.uuid4())
+    name = request.form.get("name","Crawler")
 
-    conn=get_conn()
-    c=conn.cursor()
+    conn = get_conn()
+    c = conn.cursor()
 
-    c.execute("INSERT INTO characters VALUES(?,?,?)",(cid,name,""))
+    c.execute(
+        "INSERT INTO characters VALUES(?,?,?)",
+        (cid, name, "")
+    )
 
     for s in STATS:
-        c.execute("INSERT INTO stats VALUES(?,?,?,?,?)",(cid,s,10,0,0))
+
+        c.execute(
+            "INSERT INTO stats VALUES(?,?,?,?,?)",
+            (cid, s, 10, 0, 0)
+        )
 
     c.execute("""
-    INSERT INTO meta VALUES(?,?,?,?,?,?,?,?,?,?,?)
-    """,(cid,1,100,100,0,0,0,0,"","",""))
+    INSERT INTO meta VALUES(
+        ?,?,?,?,?,?,?,?,?,?,?
+    )
+    """,(
+        cid,
+        1,
+        100,
+        100,
+        0,
+        0,
+        0,
+        0,
+        "",
+        "",
+        ""
+    ))
 
     conn.commit()
     conn.close()
 
     return redirect(f"/c/{cid}")
 
-# ================= IMAGE UPLOAD =================
-@app.route("/upload/<cid>",methods=["POST"])
+# =========================================
+# IMAGE UPLOAD
+# =========================================
+
+@app.route("/upload/<cid>", methods=["POST"])
 def upload(cid):
 
-    file=request.files["image"]
+    file = request.files["image"]
 
     if file:
-        filename=secure_filename(file.filename)
-        path=os.path.join(UPLOAD_FOLDER,filename)
-        file.save(path)
 
-        conn=get_conn()
-        c=conn.cursor()
+        filename = secure_filename(file.filename)
 
-        c.execute("UPDATE characters SET image=? WHERE id=?",(path,cid))
+        save_path = os.path.join(
+            UPLOAD_FOLDER,
+            filename
+        )
+
+        file.save(save_path)
+
+        web_path = f"/image/{filename}"
+
+        conn = get_conn()
+        c = conn.cursor()
+
+        c.execute(
+            "UPDATE characters SET image=? WHERE id=?",
+            (web_path, cid)
+        )
 
         conn.commit()
         conn.close()
 
     return redirect(f"/c/{cid}")
 
-# ================= AUTOSAVE =================
-@app.route("/autosave/<cid>",methods=["POST"])
+@app.route("/image/<filename>")
+def image(filename):
+
+    return send_from_directory(
+        UPLOAD_FOLDER,
+        filename
+    )
+
+# =========================================
+# AUTOSAVE
+# =========================================
+
+@app.route("/autosave/<cid>", methods=["POST"])
 def autosave(cid):
 
-    data=request.json
+    data = request.json
 
-    conn=get_conn()
-    c=conn.cursor()
+    equipment = data.get("equipment","")
 
-    inventory=data.get("inventory","")
+    stat_bonus, skill_bonus, perc_bonus, conds = parse_equipment(equipment)
 
-    stat_b,skill_b,perc_b,conds=parse_inventory(inventory)
+    conn = get_conn()
+    c = conn.cursor()
 
     # META
     c.execute("""
     UPDATE meta SET
-    level=?,
-    hp=?,
-    max_hp=?,
-    gold=?,
-    views=?,
-    followers=?,
-    favorites=?,
-    equipment=?,
-    spells=?,
-    inventory=?
+        level=?,
+        hp=?,
+        max_hp=?,
+        gold=?,
+        views=?,
+        followers=?,
+        favorites=?,
+        equipment=?,
+        inventory=?,
+        spells=?
     WHERE char_id=?
     """,(
         data.get("level",1),
@@ -259,53 +350,85 @@ def autosave(cid):
         data.get("views",0),
         data.get("followers",0),
         data.get("favorites",0),
-        data.get("equipment",""),
+        equipment,
+        data.get("inventory",""),
         data.get("spells",""),
-        inventory,
         cid
     ))
 
     # STATS
     for s in STATS:
+
         c.execute("""
         UPDATE stats
-        SET base=?,buff=?,equip=?
+        SET base=?, buff=?, equip=?
         WHERE char_id=? AND stat=?
         """,(
             data.get(f"base_{s}",10),
             data.get(f"buff_{s}",0),
-            stat_b[s],
-            cid,s
+            stat_bonus[s],
+            cid,
+            s
         ))
 
     # SKILLS
-    c.execute("DELETE FROM skills WHERE char_id=?",(cid,))
-    for k,v in skill_b.items():
-        c.execute("INSERT INTO skills VALUES(?,?,?)",(cid,k,v))
+    c.execute(
+        "DELETE FROM skills WHERE char_id=?",
+        (cid,)
+    )
 
-    # PERCENT
-    c.execute("DELETE FROM perc WHERE char_id=?",(cid,))
-    for k,v in perc_b.items():
-        c.execute("INSERT INTO perc VALUES(?,?,?)",(cid,k,v))
+    for k,v in skill_bonus.items():
+
+        c.execute(
+            "INSERT INTO skills VALUES(?,?,?)",
+            (cid,k,v)
+        )
+
+    # PERCENTAGES
+    c.execute(
+        "DELETE FROM percentages WHERE char_id=?",
+        (cid,)
+    )
+
+    for k,v in perc_bonus.items():
+
+        c.execute(
+            "INSERT INTO percentages VALUES(?,?,?)",
+            (cid,k,v)
+        )
 
     # CONDITIONS
-    c.execute("DELETE FROM conditions WHERE char_id=?",(cid,))
+    c.execute(
+        "DELETE FROM conditions WHERE char_id=?",
+        (cid,)
+    )
+
     for cond in conds:
-        c.execute("INSERT INTO conditions VALUES(?,?)",(cid,cond))
+
+        c.execute(
+            "INSERT INTO conditions VALUES(?,?)",
+            (cid, cond)
+        )
 
     # EFFECTS
-    c.execute("DELETE FROM effects WHERE char_id=?",(cid,))
+    c.execute(
+        "DELETE FROM effects WHERE char_id=?",
+        (cid,)
+    )
+
     for e in data.get("effects",[]):
 
         c.execute("""
-        INSERT INTO effects VALUES(?,?,?,?,?,?,?)
+        INSERT INTO effects VALUES(
+            ?,?,?,?,?,?,?
+        )
         """,(
             str(uuid.uuid4()),
             cid,
             e["name"],
             e["value"],
             e["duration"],
-            e["type"],
+            e["duration_type"],
             e["is_buff"]
         ))
 
@@ -314,42 +437,78 @@ def autosave(cid):
 
     return jsonify({"status":"ok"})
 
+# =========================================
+# CHARACTER PAGE
+# =========================================
+
 @app.route("/c/<cid>")
-def char(cid):
+def character(cid):
 
-    conn=get_conn()
-    c=conn.cursor()
+    conn = get_conn()
+    c = conn.cursor()
 
-    c.execute("SELECT * FROM characters WHERE id=?",(cid,))
-    character=c.fetchone()
+    c.execute(
+        "SELECT * FROM characters WHERE id=?",
+        (cid,)
+    )
 
-    c.execute("SELECT stat,base,buff,equip FROM stats WHERE char_id=?",(cid,))
-    stats={}
+    character = c.fetchone()
+
+    c.execute("""
+    SELECT stat,base,buff,equip
+    FROM stats
+    WHERE char_id=?
+    """,(cid,))
+
+    stats = {}
 
     for s,b,bu,e in c.fetchall():
-        t=b+bu+e
-        stats[s]={
-            "base":b,
-            "buff":bu,
-            "equip":e,
-            "total":t,
-            "mod":t//5
+
+        total = b + bu + e
+
+        stats[s] = {
+            "base": b,
+            "buff": bu,
+            "equip": e,
+            "total": total,
+            "mod": total // 5
         }
 
-    c.execute("SELECT * FROM meta WHERE char_id=?",(cid,))
-    meta=c.fetchone()
+    c.execute(
+        "SELECT * FROM meta WHERE char_id=?",
+        (cid,)
+    )
 
-    c.execute("SELECT * FROM skills WHERE char_id=?",(cid,))
-    skills=c.fetchall()
+    meta = c.fetchone()
 
-    c.execute("SELECT * FROM perc WHERE char_id=?",(cid,))
-    percs=c.fetchall()
+    c.execute(
+        "SELECT * FROM skills WHERE char_id=?",
+        (cid,)
+    )
 
-    c.execute("SELECT * FROM conditions WHERE char_id=?",(cid,))
-    conds=c.fetchall()
+    skills = c.fetchall()
 
-    c.execute("SELECT name,value,duration,type,is_buff FROM effects WHERE char_id=?",(cid,))
-    effects=c.fetchall()
+    c.execute(
+        "SELECT * FROM percentages WHERE char_id=?",
+        (cid,)
+    )
+
+    percentages = c.fetchall()
+
+    c.execute(
+        "SELECT * FROM conditions WHERE char_id=?",
+        (cid,)
+    )
+
+    conditions = c.fetchall()
+
+    c.execute("""
+    SELECT name,value,duration,duration_type,is_buff
+    FROM effects
+    WHERE char_id=?
+    """,(cid,))
+
+    effects = c.fetchall()
 
     conn.close()
 
@@ -359,13 +518,13 @@ def char(cid):
         stats=stats,
         meta=meta,
         skills=skills,
-        percs=percs,
-        conds=conds,
+        percentages=percentages,
+        conditions=conditions,
         effects=effects,
         storage=STORAGE
     )
 
 init()
 
-if __name__=="__main__":
+if __name__ == "__main__":
     app.run()
